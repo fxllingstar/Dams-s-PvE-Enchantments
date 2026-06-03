@@ -7,6 +7,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Player;
+import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -24,6 +25,7 @@ public class DragonManager implements Listener {
    
     public DragonManager(JavaPlugin plugin){
         this.plugin = plugin;
+        
     }
 
 
@@ -121,6 +123,25 @@ public void spawnEndermanWave(EnderDragon dragon){
             activeWaveEnderman.clear();
             dragonUUID = null;
             currentStage = 1;
+            Player killer = dragon.getKiller();
+        if (killer != null) {
+            int kills = KillTracker.incrementAndGet(killer);
+            killer.sendMessage(ChatColor.DARK_PURPLE +
+                "Dragon kills: " + kills + "/10"); 
+
+            if (kills >= 10) {
+                event.setCancelled(true);  
+                triggerRefusal(killer, dragon);
+            }
+        }
         }
     }
+    private void triggerRefusal(Player killer, EnderDragon dragon) {
+  
+    dragon.setHealth(dragon.getMaxHealth());
+
+    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+        new RefusalDialogue((DPE) plugin, killer, dragon).start();
+    }, 40L); 
+}
 }

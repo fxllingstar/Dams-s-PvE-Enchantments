@@ -8,6 +8,7 @@ public final class DPE extends JavaPlugin {
         saveDefaultConfig();
         DragonManager dragonManager = new DragonManager(this);
         getServer().getPluginManager().registerEvents(dragonManager, this);
+         KillTracker.init(this); 
 
         getLogger().info("Dams's PvE Enchantments (dpe) boss overhaul has been successfully enabled!");
     }

@@ -130,7 +130,7 @@ private void promptChoice(){
             dragon.setAI(true);
             dragon.setInvulnerable(false);
 
-            // TODO: hook into your refusal fight stages here
+            // TODO: hook into refusal fight stages here
             // RefusalBattle.start(plugin, player, dragon);
 
         }, 60L);
