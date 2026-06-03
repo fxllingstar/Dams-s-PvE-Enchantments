@@ -1,6 +1,4 @@
 package me.st4r.DPE;
-
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class DPE extends JavaPlugin {
