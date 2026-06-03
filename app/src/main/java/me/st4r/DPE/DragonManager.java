@@ -8,10 +8,12 @@ import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Player;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -115,33 +117,75 @@ public void spawnEndermanWave(EnderDragon dragon){
     }
  
 
-    @EventHandler 
-    public void OnDragonDeath(EntityDeathEvent event){
-        if (event.getEntity() instanceof EnderDragon dragon && event.getEntity().getUniqueId().equals(dragonUUID)){
-            Stage3.restoreTerrain();
-            Stage4.stopRageMode();
-            activeWaveEnderman.clear();
-            dragonUUID = null;
-            currentStage = 1;
-            Player killer = dragon.getKiller();
-        if (killer != null) {
-            int kills = KillTracker.incrementAndGet(killer);
-            killer.sendMessage(ChatColor.DARK_PURPLE +
-                "Dragon kills: " + kills + "/10"); 
+ @EventHandler
+public void OnDragonDeath(EntityDeathEvent event) {
+    if (event.getEntity() instanceof EnderDragon dragon
+            && event.getEntity().getUniqueId().equals(dragonUUID)) {
 
+        Stage3.restoreTerrain();
+        Stage4.stopRageMode();
+        activeWaveEnderman.clear();
+        dragonUUID = null;
+        currentStage = 1;
+
+        Player killer = dragon.getKiller();
+        if (killer != null) {
+
+          
+            if (KillTracker.hasMadePeace(killer)) {
+                Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+                    killer.sendMessage(ChatColor.DARK_PURPLE +
+                        "[Dragon] " + ChatColor.LIGHT_PURPLE + "...");
+                    killer.sendMessage(ChatColor.DARK_PURPLE +
+                        "[Dragon] " + ChatColor.LIGHT_PURPLE + "Good fight, Traveler.");
+                    killer.sendMessage(ChatColor.DARK_PURPLE +
+                        "[Dragon] " + ChatColor.GRAY + "Until the next cycle.");
+
+                }, 40L);
+                return; 
+            }
+
+           
+            int kills = KillTracker.incrementAndGet(killer);
             if (kills >= 10) {
-                event.setCancelled(true);  
+                event.setCancelled(true);
                 triggerRefusal(killer, dragon);
             }
         }
-        }
     }
+}
     private void triggerRefusal(Player killer, EnderDragon dragon) {
-  
+    
+    RefusalAdvancement.grant(killer);
     dragon.setHealth(dragon.getMaxHealth());
 
     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
         new RefusalDialogue((DPE) plugin, killer, dragon).start();
     }, 40L); 
 }
+
+
+@EventHandler
+public void onPlayerChangeWorld(PlayerChangedWorldEvent e) {
+    Player player = e.getPlayer();
+    World newWorld = player.getWorld();
+
+    if (newWorld.getEnvironment() != World.Environment.THE_END) return;
+
+
+    if (!KillTracker.hasMadePeace(player)) return;
+
+  
+    EnderDragon dragon = newWorld.getEntitiesByClass(EnderDragon.class)
+        .stream()
+        .findFirst()
+        .orElse(null);
+
+    if (dragon == null) return;
+    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+        new ReturnDialogue((DPE) plugin, player, dragon).start();
+    }, 60L);
 }
+}
+
+

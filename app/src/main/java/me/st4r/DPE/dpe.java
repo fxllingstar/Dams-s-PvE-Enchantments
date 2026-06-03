@@ -9,7 +9,7 @@ public final class DPE extends JavaPlugin {
         DragonManager dragonManager = new DragonManager(this);
         getServer().getPluginManager().registerEvents(dragonManager, this);
          KillTracker.init(this); 
-
+        RefusalAdvancement.register(this); 
         getLogger().info("Dams's PvE Enchantments (dpe) boss overhaul has been successfully enabled!");
     }
 
@@ -22,7 +22,7 @@ public final class DPE extends JavaPlugin {
         } catch (NoClassDefFoundError | Exception e) { 
             getLogger().warning("Could not verify terrain restoration on shutdown.");
         }
-
+        RefusalAdvancement.unregister();
         getLogger().info("Dams's PvE Enchantments (dpe) has been disabled.");
     }
 }

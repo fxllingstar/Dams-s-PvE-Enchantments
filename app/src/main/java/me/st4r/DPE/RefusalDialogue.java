@@ -109,9 +109,9 @@ private void promptChoice(){
             player.sendMessage(ChatColor.DARK_PURPLE +
                 "✦ You received: " + ChatColor.LIGHT_PURPLE + "Fractured Wings");
 
-            // Grant achievement toast
-            // TODO: Add the Achivement with Achivement API in a seperate file
-
+           
+                
+           
             dragon.remove();
             KillTracker.normalizeToNine(player);
 
