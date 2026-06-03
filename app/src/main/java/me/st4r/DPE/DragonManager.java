@@ -11,7 +11,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -49,7 +48,7 @@ public void OnDragonDamage(EntityDamageByEntityEvent event){
     if (!dragon.getUniqueId().equals(dragonUUID)) return;
 
     //Immunity for the dragon
-    //cleanUpEndermanSet();  commented, code not ready yet.
+    cleanUpEndermanSet(); 
     if (!activeWaveEnderman.isEmpty()){
         event.setCancelled(true);
         if (event.getDamager() instanceof Player player){
@@ -78,12 +77,15 @@ private void transitionTo(int newStage, EnderDragon dragon){
     this.currentStage = newStage;
     Bukkit.broadcastMessage("§5§lThe Ender Dragon enters Stage " + newStage + "!");
     spawnEndermanWave(dragon);
-//uncomment when the stages are done
-  /*   switch (newStage){
+
+        switch (newStage){
         case 2 -> Stage2.triggerVoidCracks(plugin,dragon);
         case 3 -> Stage3.triggerTerrainShift(dragon.getLocation());
-        case 4 -> Stage4.startRageMode(plugin, dragon);
-    }*/
+        case 4 -> {
+            Stage4.startRageMode(plugin, dragon);
+            Stage4.runVoidCollapse(plugin, dragon.getLocation());
+                }
+    }
 }   
 
 public void spawnEndermanWave(EnderDragon dragon){
@@ -113,9 +115,12 @@ public void spawnEndermanWave(EnderDragon dragon){
 
     @EventHandler 
     public void OnDragonDeath(EntityDeathEvent event){
-        if (event.getEntity().getUniqueId().equals(dragonUUID)){
-            //Stage3.restoreTerrain();
-            //commented because stage 3 does not exist in the current stageee :3
+        if (event.getEntity() instanceof EnderDragon dragon && event.getEntity().getUniqueId().equals(dragonUUID)){
+            Stage3.restoreTerrain();
+            Stage4.stopRageMode();
+            activeWaveEnderman.clear();
+            dragonUUID = null;
+            currentStage = 1;
         }
     }
 }

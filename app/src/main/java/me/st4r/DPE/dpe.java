@@ -18,8 +18,9 @@ public final class DPE extends JavaPlugin {
     public void onDisable() {
         try {
             Stage3.restoreTerrain();
+            Stage4.stopRageMode();
             getLogger().info("Safely restored any shifted End terrain during shutdown.");
-        } catch (NoClassDefFoundError | Exception e) {
+        } catch (NoClassDefFoundError | Exception e) { 
             getLogger().warning("Could not verify terrain restoration on shutdown.");
         }
 

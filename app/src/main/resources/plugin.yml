@@ -1,0 +1,5 @@
+name: DPE
+version: ${version}
+main: me.st4r.DPE.DPE
+api-version: '1.21.11'
+description: Dams's PvE Enchantments boss overhaul
