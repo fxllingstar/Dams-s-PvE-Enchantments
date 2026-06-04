@@ -1,0 +1,11 @@
+endermen-settings:
+  # The base number of Endermen to spawn per player, per stage.
+  # Formula: Current Stage * Active Players * multiplier-per-player
+  # Setting this to 1 means: Stage 4 with 6 players = 24 Endermen (4 * 6 * 1)
+  # Setting this to 2 means: Stage 4 with 6 players = 48 Endermen (4 * 6 * 2)
+  multiplier-per-player: 1
+
+  # If you want a fixed difficulty regardless of how many players are online,
+  # set 'use-fixed-amount' to true and adjust the 'fixed-multiplier' below.
+  use-fixed-amount: false
+  fixed-multiplier: 6 # Formula: Current Stage * fixed-multiplier (e.g., 4 * 6 = 24)

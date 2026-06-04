@@ -30,6 +30,8 @@ public class DragonManager implements Listener {
         
     }
 
+    
+
 
    @EventHandler
    public void OnDragonSpawn(EntitySpawnEvent event){
@@ -98,12 +100,22 @@ public void spawnEndermanWave(EnderDragon dragon){
     var players = world.getPlayers();
     if (players.isEmpty()) return;
 
-    //Here, replace the code with config file later on.
-    //ima make a basic one, just for the test, but CHANGE THIS LATER!!!!!
-   for (int i = 0; i < (currentStage * 6); i++){
+    var config = plugin.getConfig();
+    boolean useFixed = config.getBoolean("endermen-settings.use-fixed-amount", false);
+    int totalToSpawn;
+
+    if (useFixed) {
+        int fixedMultiplier = config.getInt("endermen-settings.fixed-multiplier", 6);
+        totalToSpawn = currentStage * fixedMultiplier;
+    }else {
+        int perPlayerMultiplier = config.getInt("endermen-settings.multiplier-per-player", 1);
+        totalToSpawn = currentStage * players.size() * perPlayerMultiplier;
+    }
+
+   for (int i = 0; i < totalToSpawn; i++){
     var loc = dragon.getLocation().add((Math.random() - 0.5) * 20, -5, (Math.random() - 0.5) * 20);
      var highestBlock = world.getHighestBlockAt(loc);
-//highlight enderman in the future
+
      Enderman enderman = world.spawn(highestBlock.getLocation().add(0,1,0), Enderman.class);
      Player target = players.get((int) (Math.random() * players.size()));
      enderman.setTarget(target);
