@@ -1,4 +1,4 @@
-package me.st4r.DPE;
+package me.st4r.DPE.stages;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -89,7 +89,6 @@ public class Stage2 {
 
         Player victim = players.get(ThreadLocalRandom.current().nextInt(players.size()));
         
-       
         dragon.setPhase(EnderDragon.Phase.CHARGE_PLAYER);
         
         Location slamHeight = victim.getLocation().add(0, 22, 0);

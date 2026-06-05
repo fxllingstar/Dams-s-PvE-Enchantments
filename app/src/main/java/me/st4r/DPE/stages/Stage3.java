@@ -1,4 +1,4 @@
-package me.st4r.DPE;
+package me.st4r.DPE.stages;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -63,8 +63,7 @@ public class Stage3 {
             pdc.set(CLONE_KEY, PersistentDataType.BOOLEAN, true);
             pdc.set(HITS_KEY, PersistentDataType.INTEGER, 0);
             
-            // FIX: Changed STRAFE_PLAYER to CHARGE_PLAYER for universal framework safety
-            clone.setPhase(EnderDragon.Phase.CHARGE_PLAYER); 
+            clone.setPhase(EnderDragon.Phase.CHARGE_PLAYER);
             clone.getWorld().playSound(clone.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 2.0f, 1.4f);
         });
     }
@@ -79,7 +78,6 @@ public class Stage3 {
             clone.remove();
         } else {
             pdc.set(HITS_KEY, PersistentDataType.INTEGER, currentHits);
-            // FIX: Changed Sound.ENTITY_ITEM_SHIELD_BLOCK to Sound.ITEM_SHIELD_BLOCK
             clone.getWorld().playSound(clone.getLocation(), Sound.ITEM_SHIELD_BLOCK, 1.2f, 0.6f);
             clone.getWorld().spawnParticle(Particle.WITCH, clone.getLocation(), 25, 1, 1, 1, 0.1);
         }

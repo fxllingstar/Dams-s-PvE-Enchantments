@@ -6,14 +6,30 @@ import org.bukkit.World;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import me.st4r.DPE.stages.Stage1;
+import me.st4r.DPE.stages.Stage2;
+import me.st4r.DPE.stages.Stage3;
+import me.st4r.DPE.stages.Stage4;
+
 public final class DPE extends JavaPlugin {
+    private DragonManager dragonManager;
 
     @Override
     public void onEnable() {
         saveDefaultConfig(); 
         
-        DragonManager dragonManager = new DragonManager(this); 
+        dragonManager = new DragonManager(this); 
         getServer().getPluginManager().registerEvents(dragonManager, this); 
+
+        Bukkit.getScheduler().runTask(this, () -> {
+            for (World world : Bukkit.getWorlds()) {
+                if (world.getEnvironment() != World.Environment.THE_END) continue;
+                world.getEntitiesByClass(EnderDragon.class).stream()
+                        .filter(dragon -> !dragon.getPersistentDataContainer().has(new NamespacedKey(this, "is_clone")))
+                        .findFirst()
+                        .ifPresent(dragonManager::restoreExistingDragon);
+            }
+        });
         
         
         KillTracker.init(this); 

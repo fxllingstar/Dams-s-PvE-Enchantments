@@ -1,4 +1,4 @@
-package me.st4r.DPE;
+package me.st4r.DPE.stages;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -27,7 +27,6 @@ public class Stage4 {
             rageTask = null;
         }
 
-      
         var speedAttr = dragon.getAttribute(Attribute.MOVEMENT_SPEED);
         if (speedAttr != null) {
             speedAttr.setBaseValue(speedAttr.getBaseValue() * 1.8); 
@@ -47,7 +46,6 @@ public class Stage4 {
                     Player target = players.get((int) (Math.random() * players.size()));
                     dragon.setTarget(target);
                     
-                 
                     dragon.setPhase(EnderDragon.Phase.CHARGE_PLAYER);
                 }
             }
