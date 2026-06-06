@@ -119,7 +119,7 @@ public class DragonManager implements Listener {
         if (!activeWaveEnderman.isEmpty()) {
             event.setCancelled(true);
             if (event.getDamager() instanceof Player player) {
-                player.sendMessage(Component.text("The Ender Dragon is protected by its Endermen thralls!", NamedTextColor.RED));
+                player.sendMessage(Component.text("The Ender Dragon is protected by its Endermen!", NamedTextColor.RED));
             }
             return;
         }
@@ -136,7 +136,7 @@ public class DragonManager implements Listener {
         activeWaveEnderman.remove(event.getEntity().getUniqueId());
     }
 
-    // FIX: Wipe residual tracking wave entities if the arena completely clears out
+
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();

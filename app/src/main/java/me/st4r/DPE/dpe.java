@@ -17,7 +17,6 @@ public final class DPE extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig(); 
-        
         dragonManager = new DragonManager(this); 
         getServer().getPluginManager().registerEvents(dragonManager, this); 
 
