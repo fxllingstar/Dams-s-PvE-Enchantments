@@ -24,18 +24,18 @@ public class Stage1 {
     private static long lastCrystalLaserTime = 0;
     private static long lastDragonScreechTime = 0;
     private static BukkitTask stage1Ticker = null;
-    private static final long CRYSTAL_LASER_COOLDOWN_MS = 25000L;
+    private static final long CRYSTAL_LASER_COOLDOWN_MS = 10000L;
     private static final long DRAGON_SCREECH_COOLDOWN_MS = 12000L;
 
     public static void startStageTasks(JavaPlugin plugin, EnderDragon dragon) {
         Bukkit.getLogger().info("[Debug] Entering startStageTasks");
         stopStageTasks();
         resetCooldowns();
-        stage1Ticker = new BukkitRunnable() { // Fixed typo here
+        stage1Ticker = new BukkitRunnable() { 
             int ticks = 0;
             @Override
             public void run() {
-                // Fixed: Added debug visibility inside the ticker loop if needed, but keeping it silent unless ticking
+              
                 if (dragon.isDead() || !dragon.isValid()) {
                     Bukkit.getLogger().info("[Debug] Stage1 Ticker cancelled - Dragon dead/invalid");
                     cancel();
@@ -98,63 +98,87 @@ public class Stage1 {
         attemptCrystalLaser(plugin, crystal.getLocation(), target);
     }
 
-    public static boolean attemptCrystalLaser(JavaPlugin plugin, Location crystalLoc, Player player) {
-        Bukkit.getLogger().info("[Debug] Entering attemptCrystalLaser for " + player.getName());
-        long now = System.currentTimeMillis();
-        if (now - lastCrystalLaserTime < CRYSTAL_LASER_COOLDOWN_MS) return false; 
+public static boolean attemptCrystalLaser(JavaPlugin plugin, Location crystalLoc, Player player) {
+    Bukkit.getLogger().info("[Debug] Entering attemptCrystalLaser for " + player.getName());
+    long now = System.currentTimeMillis();
+    if (now - lastCrystalLaserTime < CRYSTAL_LASER_COOLDOWN_MS) return false; 
 
-        lastCrystalLaserTime = now;
-        Location spawnLoc = crystalLoc.clone().add(0, 0.5, 0);
+    lastCrystalLaserTime = now;
+    Location spawnLoc = crystalLoc.clone().add(0, 0.5, 0);
 
-        player.playSound(player.getLocation(), Sound.ENTITY_EVOKER_PREPARE_ATTACK, 1.5f, 0.5f);
-        player.playSound(crystalLoc, Sound.BLOCK_BEACON_ACTIVATE, 2.0f, 0.5f);
+    player.playSound(player.getLocation(), Sound.ENTITY_EVOKER_PREPARE_ATTACK, 1.5f, 0.5f);
+    player.playSound(crystalLoc, Sound.BLOCK_BEACON_ACTIVATE, 2.0f, 0.5f);
 
-        int telegraphTaskId = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (!player.isOnline()) return;
-            player.getWorld().spawnParticle(Particle.PORTAL, player.getLocation().add(0, 1, 0), 6, 0.3, 0.3, 0.3, 0.1);
-            crystalLoc.getWorld().spawnParticle(Particle.DRAGON_BREATH, spawnLoc, 4, 0.1, 0.1, 0.1, 0.02);
-        }, 0L, 2L).getTaskId(); 
+    
+    new BukkitRunnable() {
+        int telegraphTicks = 0;
 
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            Bukkit.getLogger().info("[Debug] Executing Laser Hit Task");
-            Bukkit.getScheduler().cancelTask(telegraphTaskId);
+        @Override
+        public void run() {
+            if (!player.isOnline() || !player.getWorld().equals(crystalLoc.getWorld())) {
+                cancel();
+                return;
+            }
 
-            if (!player.isOnline() || !player.getWorld().equals(crystalLoc.getWorld())) return;
+            try {
+                player.getWorld().spawnParticle(Particle.PORTAL, player.getLocation().add(0, 1, 0), 6, 0.3, 0.3, 0.3, 0.1);
+                spawnLoc.getWorld().spawnParticle(Particle.DRAGON_BREATH, spawnLoc, 4, 0.1, 0.1, 0.1, 0.02);
+            } catch (Exception e) {
+                Bukkit.getLogger().warning("[DPE] Particle exception during telegraph: " + e.getMessage());
+            }
 
-            player.playSound(player.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 1.5f, 1.2f);
+            telegraphTicks += 2;
+            if (telegraphTicks >= 40) {
+                cancel(); 
+                
+                startLaserBeamDamageTask(plugin, spawnLoc, crystalLoc, player);
+            }
+        }
+    }.runTaskTimer(plugin, 0L, 2L);
 
-            new BukkitRunnable() {
-                int runTicks = 0;
+    return true;
+}
 
-                @Override
-                public void run() {
-                    if (runTicks > 15 || !player.isOnline() || !player.getWorld().equals(crystalLoc.getWorld())) {
-                        if (player.isOnline()) {
-                            Bukkit.getLogger().info("[Debug] Applying laser damage to " + player.getName());
-                            player.damage(8.0);
-                            player.getWorld().spawnParticle(Particle.FLASH, player.getLocation().add(0, 1, 0), 1);
-                        }
-                        cancel();
-                        return;
-                    }
+private static void startLaserBeamDamageTask(JavaPlugin plugin, Location spawnLoc, Location crystalLoc, Player player) {
+    if (!player.isOnline() || !player.getWorld().equals(crystalLoc.getWorld())) return;
 
-                    Location targetPoint = player.getLocation().add(0, 1.2, 0);
-                    Vector originVec = spawnLoc.toVector();
-                    Vector targetVec = targetPoint.toVector();
-                    Vector direction = targetVec.subtract(originVec);
-                    double distance = direction.length();
-                    direction.normalize();
+    player.playSound(player.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, 1.5f, 1.2f);
 
-                    for (double d = 0; d < distance; d += 0.25) {
-                        Location point = spawnLoc.clone().add(direction.clone().multiply(d));
-                        point.getWorld().spawnParticle(Particle.ENCHANTED_HIT, point, 1, 0, 0, 0, 0);
-                    }
-                    runTicks += 2;
+    new BukkitRunnable() {
+        int runTicks = 0;
+
+        @Override
+        public void run() {
+            if (runTicks > 15 || !player.isOnline() || !player.getWorld().equals(crystalLoc.getWorld())) {
+                if (player.isOnline()) {
+                    Bukkit.getLogger().info("[Debug] Applying laser damage to " + player.getName());
+                    player.damage(16.0);
+                    try {
+                        player.getWorld().spawnParticle(Particle.FLASH, player.getLocation().add(0, 1, 0), 1);
+                    } catch (Exception ignored) {}
                 }
-            }.runTaskTimer(plugin, 0L, 2L);
+                cancel();
+                return;
+            }
 
-        }, 40L); 
+            try {
+                Location targetPoint = player.getLocation().add(0, 1.2, 0);
+                Vector originVec = spawnLoc.toVector();
+                Vector targetVec = targetPoint.toVector();
+                Vector direction = targetVec.subtract(originVec);
+                double distance = direction.length();
+                direction.normalize();
 
-        return true;
-    }
+                for (double d = 0; d < distance; d += 0.25) {
+                    Location point = spawnLoc.clone().add(direction.clone().multiply(d));
+                    point.getWorld().spawnParticle(Particle.ENCHANTED_HIT, point, 1, 0, 0, 0, 0);
+                }
+            } catch (Exception e) {
+                Bukkit.getLogger().warning("[DPE] Particle exception during beam render: " + e.getMessage());
+            }
+
+            runTicks += 2; 
+        }
+    }.runTaskTimer(plugin, 0L, 2L);
+}
 }

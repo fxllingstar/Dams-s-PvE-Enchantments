@@ -12,6 +12,7 @@ import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.Location;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
@@ -196,11 +197,13 @@ public class DragonManager implements Listener {
     }
 
     private void transitionTo(int newStage, EnderDragon dragon) {
-        this.currentStage = newStage;
+       this.currentStage = newStage;
         dragon.getPersistentDataContainer().set(stageKey, PersistentDataType.INTEGER, newStage);
         
         Bukkit.broadcast(Component.text("The Ender Dragon enters Stage " + newStage + "!", NamedTextColor.DARK_PURPLE, TextDecoration.BOLD));
         spawnEndermanWave(dragon);
+
+        Location arenaCenter = new Location(dragon.getWorld(), 0, 64, 0);
 
         switch (newStage) {
             case 2 -> {
@@ -209,13 +212,12 @@ public class DragonManager implements Listener {
             }
             case 3 -> {
                 Stage2.stopStage2Mechanics();
-                Stage3.triggerTerrainShift(dragon.getLocation());
+                Stage3.triggerTerrainShift(arenaCenter);
                 Stage3.startCloneSpawning(plugin, dragon);
             }
             case 4 -> {
                 Stage3.stopCloneSpawning();
                 Stage4.startRageMode(plugin, dragon);
-                Stage4.runVoidCollapse(plugin, dragon.getLocation());
             }
         }
     }   

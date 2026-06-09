@@ -37,7 +37,7 @@ public class Stage3 {
                         .filter(d -> d.getPersistentDataContainer().has(CLONE_KEY))
                         .count();
 
-                if (cloneCount < 2) { 
+                if (cloneCount < 1) { 
                     spawnShadowClone(plugin, trueDragon);
                 }
             }
@@ -48,6 +48,14 @@ public class Stage3 {
         if (cloneTicker != null) {
             cloneTicker.cancel();
             cloneTicker = null;
+        }
+        
+        for (World world : Bukkit.getWorlds()) {
+            if (world.getEnvironment() == World.Environment.THE_END) {
+                world.getEntitiesByClass(EnderDragon.class).stream()
+                        .filter(d -> d.getPersistentDataContainer().has(CLONE_KEY))
+                        .forEach(EnderDragon::remove);
+            }
         }
     }
 
@@ -83,14 +91,14 @@ public class Stage3 {
         }
     }
 
-    public static void triggerTerrainShift(Location center) {
+   public static void triggerTerrainShift(Location center) {
         World world = center.getWorld();
         int radius = 15;
         Location base = center.clone();
 
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
-                for (int y = -5; y <= 5; y++) {
+                for (int y = -10; y <= 10; y++) {
                     if (Math.random() > 0.85) {
                         Location loc = base.clone().add(x, y, z);
                         Block block = loc.getBlock();
@@ -149,3 +157,6 @@ public class Stage3 {
         savedTerrain.clear();
     }
 }
+
+//Hello, remember to be kind!
+

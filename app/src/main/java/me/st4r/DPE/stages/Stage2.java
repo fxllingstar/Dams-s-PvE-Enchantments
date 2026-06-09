@@ -88,11 +88,13 @@ public class Stage2 {
         if (players.isEmpty()) return;
 
         Player victim = players.get(ThreadLocalRandom.current().nextInt(players.size()));
-        
-        dragon.setPhase(EnderDragon.Phase.CHARGE_PLAYER);
+    
+        dragon.setPhase(EnderDragon.Phase.LAND_ON_PORTAL);
         
         Location slamHeight = victim.getLocation().add(0, 22, 0);
+        slamHeight.setDirection(victim.getLocation().toVector().subtract(slamHeight.toVector()));
         dragon.teleport(slamHeight);
+        
         dragon.getWorld().playSound(slamHeight, Sound.ENTITY_ENDER_DRAGON_GROWL, 3.0f, 0.5f);
 
         new BukkitRunnable() {
@@ -101,23 +103,40 @@ public class Stage2 {
             @Override
             public void run() {
                 if (!dragon.isValid() || dragon.isDead() || elapsed > 40) {
+                    if (dragon.isValid() && !dragon.isDead()) {
+                        dragon.setVelocity(new Vector(0, 0, 0));
+                        dragon.setPhase(EnderDragon.Phase.CIRCLING);
+                    }
                     cancel();
                     return;
                 }
 
-                dragon.setVelocity(new Vector(0, -1.8, 0));
-                dragon.getWorld().spawnParticle(Particle.DRAGON_BREATH, dragon.getLocation(), 12, 1.5, 0.5, 1.5, 0.15);
+                Location dragonLoc = dragon.getLocation();
+                Location targetLoc = victim.getLocation();
+                
+                Vector direction = targetLoc.toVector().subtract(dragonLoc.toVector());
+                direction.setX(direction.getX() * 0.15);
+                direction.setZ(direction.getZ() * 0.15);
+                direction.setY(-1.8); 
+                dragon.setVelocity(direction);
+                
+   
+                dragon.getWorld().spawnParticle(Particle.DRAGON_BREATH, dragonLoc, 12, 1.5, 0.5, 1.5, 0.15, 1.0f);
 
-                if (dragon.getLocation().getY() - victim.getLocation().getY() <= 2.5) {
-                    dragon.getWorld().playSound(dragon.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 2.5f, 0.5f);
-                    dragon.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, dragon.getLocation(), 4);
+                double yDiff = dragonLoc.getY() - targetLoc.getY();
+                if (yDiff <= 2.5 && yDiff >= -4.0 && dragonLoc.distanceSquared(targetLoc) < 36.0) { 
+                    dragon.getWorld().playSound(dragonLoc, Sound.ENTITY_GENERIC_EXPLODE, 2.5f, 0.5f);
+                    dragon.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, dragonLoc, 4);
                     
                     for (Player p : dragon.getWorld().getPlayers()) {
-                        if (p.getLocation().distanceSquared(dragon.getLocation()) < 50.0) {
+                        if (p.getLocation().distanceSquared(dragonLoc) < 50.0) {
                             p.damage(14.0, dragon);
-                            p.setVelocity(p.getLocation().toVector().subtract(dragon.getLocation().toVector()).normalize().multiply(1.4).setY(0.55));
+                            p.setVelocity(p.getLocation().toVector().subtract(dragonLoc.toVector()).normalize().multiply(1.4).setY(0.55));
                         }
                     }
+                    
+     
+                    dragon.setVelocity(new Vector(0, 0.2, 0)); 
                     dragon.setPhase(EnderDragon.Phase.CIRCLING);
                     cancel();
                     return;
