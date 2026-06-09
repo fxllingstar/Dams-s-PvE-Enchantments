@@ -37,7 +37,7 @@ public class Stage3 {
                         .filter(d -> d.getPersistentDataContainer().has(CLONE_KEY))
                         .count();
 
-                if (cloneCount < 1) { 
+                if (cloneCount < 2) { 
                     spawnShadowClone(plugin, trueDragon);
                 }
             }
@@ -48,14 +48,6 @@ public class Stage3 {
         if (cloneTicker != null) {
             cloneTicker.cancel();
             cloneTicker = null;
-        }
-        
-        for (World world : Bukkit.getWorlds()) {
-            if (world.getEnvironment() == World.Environment.THE_END) {
-                world.getEntitiesByClass(EnderDragon.class).stream()
-                        .filter(d -> d.getPersistentDataContainer().has(CLONE_KEY))
-                        .forEach(EnderDragon::remove);
-            }
         }
     }
 
@@ -91,25 +83,35 @@ public class Stage3 {
         }
     }
 
-   public static void triggerTerrainShift(Location center) {
+    public static void triggerTerrainShift(Location center) {
         World world = center.getWorld();
-        int radius = 15;
-        Location base = center.clone();
+        if (world == null) return;
 
-        for (int x = -radius; x <= radius; x++) {
-            for (int z = -radius; z <= radius; z++) {
-                for (int y = -10; y <= 10; y++) {
-                    if (Math.random() > 0.85) {
-                        Location loc = base.clone().add(x, y, z);
+        int holesToCreate = ThreadLocalRandom.current().nextInt(2, 4); 
+        int searchRadius = 24; 
+
+        for (int i = 0; i < holesToCreate; i++) {
+            int startX = center.getBlockX() + ThreadLocalRandom.current().nextInt(-searchRadius, searchRadius - 8);
+            int startZ = center.getBlockZ() + ThreadLocalRandom.current().nextInt(-searchRadius, searchRadius - 8);
+
+            for (int x = startX; x < startX + 8; x++) {
+                for (int z = startZ; z < startZ + 8; z++) {
+                    for (int y = center.getBlockY() - 22; y <= center.getBlockY() + 10; y++) {
+                        Location loc = new Location(world, x, y, z);
                         Block block = loc.getBlock();
+                        Material type = block.getType();
 
-                        if (block.getType() == Material.END_STONE || block.getType() == Material.OBSIDIAN) {
+                        if (type == Material.END_STONE || type == Material.OBSIDIAN) {
                             savedTerrain.putIfAbsent(loc, block.getBlockData());
                             block.setType(Material.AIR);
                         }
                     }
                 }
             }
+
+            Location effectLoc = new Location(world, startX + 4, center.getY() + 1, startZ + 4);
+            world.spawnParticle(Particle.DRAGON_BREATH, effectLoc, 40, 3, 1, 3, 0.05);
+            world.playSound(effectLoc, Sound.ENTITY_WITHER_BREAK_BLOCK, 1.5f, 0.6f);
         }
     }
 
@@ -157,6 +159,3 @@ public class Stage3 {
         savedTerrain.clear();
     }
 }
-
-//Hello, remember to be kind!
-
