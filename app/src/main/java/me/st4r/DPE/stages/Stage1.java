@@ -22,15 +22,22 @@ import java.util.List;
 
 public class Stage1 {
     private static long lastCrystalLaserTime = 0;
+    private static long lastDragonScreechTime = 0;
     private static BukkitTask stage1Ticker = null;
+    private static final long CRYSTAL_LASER_COOLDOWN_MS = 25000L;
+    private static final long DRAGON_SCREECH_COOLDOWN_MS = 12000L;
 
     public static void startStageTasks(JavaPlugin plugin, EnderDragon dragon) {
+        Bukkit.getLogger().info("[Debug] Entering startStageTasks");
         stopStageTasks();
-        stage1Ticker = new BukkitRunnable() {
+        resetCooldowns();
+        stage1Ticker = new BukkitRunnable() { // Fixed typo here
             int ticks = 0;
             @Override
             public void run() {
+                // Fixed: Added debug visibility inside the ticker loop if needed, but keeping it silent unless ticking
                 if (dragon.isDead() || !dragon.isValid()) {
+                    Bukkit.getLogger().info("[Debug] Stage1 Ticker cancelled - Dragon dead/invalid");
                     cancel();
                     return;
                 }
@@ -48,13 +55,27 @@ public class Stage1 {
     }
 
     public static void stopStageTasks() {
+        Bukkit.getLogger().info("[Debug] Entering stopStageTasks");
         if (stage1Ticker != null) {
             stage1Ticker.cancel();
             stage1Ticker = null;
         }
     }
 
+    private static void resetCooldowns() {
+        Bukkit.getLogger().info("[Debug] Entering resetCooldowns");
+        lastCrystalLaserTime = 0L;
+        lastDragonScreechTime = 0L;
+    }
+
     private static void triggerDragonScreech(EnderDragon dragon) {
+        Bukkit.getLogger().info("[Debug] Entering triggerDragonScreech");
+        long now = System.currentTimeMillis();
+        if (now - lastDragonScreechTime < DRAGON_SCREECH_COOLDOWN_MS) {
+            return;
+        }
+        lastDragonScreechTime = now;
+
         for (Player player : dragon.getWorld().getPlayers()) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 200, 0));
             player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 3.0f, 0.5f);
@@ -64,6 +85,7 @@ public class Stage1 {
     }
 
     private static void attemptPeriodicLaser(JavaPlugin plugin, EnderDragon dragon) {
+        Bukkit.getLogger().info("[Debug] Entering attemptPeriodicLaser");
         List<EnderCrystal> crystals = new ArrayList<>();
         dragon.getWorld().getEntitiesByClass(EnderCrystal.class).forEach(crystals::add);
         if (crystals.isEmpty()) return;
@@ -77,8 +99,9 @@ public class Stage1 {
     }
 
     public static boolean attemptCrystalLaser(JavaPlugin plugin, Location crystalLoc, Player player) {
+        Bukkit.getLogger().info("[Debug] Entering attemptCrystalLaser for " + player.getName());
         long now = System.currentTimeMillis();
-        if (now - lastCrystalLaserTime < 30000) return false; 
+        if (now - lastCrystalLaserTime < CRYSTAL_LASER_COOLDOWN_MS) return false; 
 
         lastCrystalLaserTime = now;
         Location spawnLoc = crystalLoc.clone().add(0, 0.5, 0);
@@ -93,6 +116,7 @@ public class Stage1 {
         }, 0L, 2L).getTaskId(); 
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Bukkit.getLogger().info("[Debug] Executing Laser Hit Task");
             Bukkit.getScheduler().cancelTask(telegraphTaskId);
 
             if (!player.isOnline() || !player.getWorld().equals(crystalLoc.getWorld())) return;
@@ -106,7 +130,8 @@ public class Stage1 {
                 public void run() {
                     if (runTicks > 15 || !player.isOnline() || !player.getWorld().equals(crystalLoc.getWorld())) {
                         if (player.isOnline()) {
-                    player.damage(8.0);
+                            Bukkit.getLogger().info("[Debug] Applying laser damage to " + player.getName());
+                            player.damage(8.0);
                             player.getWorld().spawnParticle(Particle.FLASH, player.getLocation().add(0, 1, 0), 1);
                         }
                         cancel();

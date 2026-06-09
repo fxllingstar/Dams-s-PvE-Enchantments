@@ -4,6 +4,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.EnderDragon;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import me.st4r.DPE.stages.Stage1;
@@ -11,7 +14,7 @@ import me.st4r.DPE.stages.Stage2;
 import me.st4r.DPE.stages.Stage3;
 import me.st4r.DPE.stages.Stage4;
 
-public final class DPE extends JavaPlugin {
+public final class DPE extends JavaPlugin implements Listener {
     private DragonManager dragonManager;
 
     @Override
@@ -19,16 +22,10 @@ public final class DPE extends JavaPlugin {
         saveDefaultConfig(); 
         dragonManager = new DragonManager(this); 
         getServer().getPluginManager().registerEvents(dragonManager, this); 
+        getServer().getPluginManager().registerEvents(this, this);
 
-        Bukkit.getScheduler().runTask(this, () -> {
-            for (World world : Bukkit.getWorlds()) {
-                if (world.getEnvironment() != World.Environment.THE_END) continue;
-                world.getEntitiesByClass(EnderDragon.class).stream()
-                        .filter(dragon -> !dragon.getPersistentDataContainer().has(new NamespacedKey(this, "is_clone")))
-                        .findFirst()
-                        .ifPresent(dragonManager::restoreExistingDragon);
-            }
-        });
+        scheduleDragonRestoreSweep();
+        Bukkit.getScheduler().runTaskTimer(this, dragonManager::ensureTrackedDragon, 40L, 100L);
         
         
         KillTracker.init(this); 
@@ -63,5 +60,34 @@ public final class DPE extends JavaPlugin {
         
         RefusalAdvancement.unregister(); 
         getLogger().info("Dams's PvE Enchantments (dpe) has been disabled.");
+    }
+
+    @EventHandler
+    public void onWorldLoad(WorldLoadEvent event) {
+        if (event.getWorld().getEnvironment() != World.Environment.THE_END) return;
+        Bukkit.getScheduler().runTask(this, () -> restoreDragonInWorld(event.getWorld()));
+    }
+
+    private void scheduleDragonRestoreSweep() {
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            for (World world : Bukkit.getWorlds()) {
+                if (world.getEnvironment() != World.Environment.THE_END) continue;
+                restoreDragonInWorld(world);
+            }
+        }, 20L);
+
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            for (World world : Bukkit.getWorlds()) {
+                if (world.getEnvironment() != World.Environment.THE_END) continue;
+                restoreDragonInWorld(world);
+            }
+        }, 100L);
+    }
+
+    private void restoreDragonInWorld(World world) {
+        world.getEntitiesByClass(EnderDragon.class).stream()
+                .filter(dragon -> !dragon.getPersistentDataContainer().has(new NamespacedKey(this, "is_clone")))
+                .findFirst()
+                .ifPresent(dragonManager::restoreExistingDragon);
     }
 }

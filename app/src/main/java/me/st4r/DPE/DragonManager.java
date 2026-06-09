@@ -52,16 +52,37 @@ public class DragonManager implements Listener {
     @EventHandler
     public void onDragonSpawn(CreatureSpawnEvent event) {
         if (!(event.getEntity() instanceof EnderDragon dragon)) return;
-        if (event.getSpawnReason().name().equals("CUSTOM")) return;
+        if (isCloneDragon(dragon)) return;
 
         initializeDragon(dragon, dragon.getPersistentDataContainer().has(stageKey, PersistentDataType.INTEGER));
     }
 
     public void restoreExistingDragon(EnderDragon dragon) {
-        if (dragon.getPersistentDataContainer().has(new NamespacedKey(plugin, "is_clone"))) {
+        if (isCloneDragon(dragon)) {
             return;
         }
         initializeDragon(dragon, dragon.getPersistentDataContainer().has(stageKey, PersistentDataType.INTEGER));
+    }
+
+    private boolean isCloneDragon(EnderDragon dragon) {
+        return dragon.getPersistentDataContainer().has(new NamespacedKey(plugin, "is_clone"));
+    }
+
+    public void ensureTrackedDragon() {
+        if (dragonUUID != null) {
+            var tracked = Bukkit.getEntity(dragonUUID);
+            if (tracked instanceof EnderDragon dragon && dragon.isValid() && !isCloneDragon(dragon)) {
+                return;
+            }
+        }
+
+        for (World world : Bukkit.getWorlds()) {
+            if (world.getEnvironment() != World.Environment.THE_END) continue;
+            world.getEntitiesByClass(EnderDragon.class).stream()
+                    .filter(dragon -> !isCloneDragon(dragon))
+                    .findFirst()
+                    .ifPresent(this::restoreExistingDragon);
+        }
     }
 
     private void initializeDragon(EnderDragon dragon, boolean resumeFromPdc) {
