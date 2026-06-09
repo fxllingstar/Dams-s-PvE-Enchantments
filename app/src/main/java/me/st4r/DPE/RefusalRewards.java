@@ -40,7 +40,7 @@ public class RefusalRewards {
             new AttributeModifier(
                 UUID.randomUUID(),
                 "refusal_speed",
-                0.4,
+                0.3,
                 AttributeModifier.Operation.ADD_NUMBER,
                 org.bukkit.inventory.EquipmentSlot.HAND
             )
