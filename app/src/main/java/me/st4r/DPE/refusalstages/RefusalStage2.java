@@ -64,7 +64,7 @@ public class RefusalStage2 implements Listener {
     }
 
     private void startStageLoops() {
-        // Gravity Wells Tick: smooth movement loop running every 2 ticks
+    
         activeTasks.add(new BukkitRunnable() {
             int ticks = 0;
             @Override
@@ -93,7 +93,7 @@ public class RefusalStage2 implements Listener {
             if (ent.isValid()) currentEndermen++;
         }
         
-        int toSpawn = Math.min(6 - currentEndermen, 4); // Hard limit safety allocation 
+        int toSpawn = Math.min(6 - currentEndermen, 4); 
         for (int i = 0; i < toSpawn; i++) {
             Location loc = dragon.getLocation().add(ThreadLocalRandom.current().nextDouble(-20, 20), -3, ThreadLocalRandom.current().nextDouble(-20, 20));
             Location high = loc.getWorld().getHighestBlockAt(loc).getLocation().add(0, 1, 0);
@@ -120,7 +120,7 @@ public class RefusalStage2 implements Listener {
         if (!(event.getEntity() instanceof EnderCrystal crystal)) return;
         
         long spawnTime = crystalSpawnTimes.getOrDefault(crystal.getUniqueId(), 0L);
-        if (System.currentTimeMillis() - spawnTime < 15000) { // 15s absolute timed window shield
+        if (System.currentTimeMillis() - spawnTime < 15000) { 
             event.setCancelled(true);
             crystal.getWorld().spawnParticle(Particle.CHERRY_LEAVES, crystal.getLocation().add(0, 0.5, 0), 10, 0.4, 0.4, 0.4, 0.05);
             if (event.getDamager() instanceof Player player) {
@@ -137,14 +137,14 @@ public class RefusalStage2 implements Listener {
         
         if (endermanSpawnTimes.containsKey(uuid)) {
             long lifetime = System.currentTimeMillis() - endermanSpawnTimes.remove(uuid);
-            if (lifetime <= 5000) { // 5-second fast kill tracking reflex punisher
+            if (lifetime <= 5000) { 
                 Location loc = enderman.getLocation();
                 loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.6f);
                 loc.getWorld().spawnParticle(Particle.EXPLOSION, loc, 1, 0, 0, 0, 0);
                 
                 for (Player p : loc.getWorld().getPlayers()) {
-                    if (p.getLocation().distanceSquared(loc) < 36.0) { // Radius 6 checking squared
-                        p.damage(10.0, dragon); // Heavy raw flat fallback damage
+                    if (p.getLocation().distanceSquared(loc) < 36.0) {
+                        p.damage(10.0, dragon); 
                         p.setVelocity(p.getLocation().toVector().subtract(loc.toVector()).normalize().multiply(1.2).setY(0.4));
                     }
                 }
@@ -160,25 +160,23 @@ public class RefusalStage2 implements Listener {
         Location wellLoc = target.getLocation().add(ThreadLocalRandom.current().nextDouble(-10, 10), 0, ThreadLocalRandom.current().nextDouble(-10, 10));
         
         gravityWells.add(wellLoc);
-        // Volatile self-destruction sweep after 12 seconds (240 Ticks)
         Bukkit.getScheduler().runTaskLater(plugin, () -> gravityWells.remove(wellLoc), 240L);
     }
 
     private void processGravityWellForces() {
         for (Location well : gravityWells) {
-            boolean isPull = (well.getBlockX() % 2 == 0); // Alternating logic structural variant calculation
+            boolean isPull = (well.getBlockX() % 2 == 0); 
             well.getWorld().spawnParticle(isPull ? Particle.PORTAL : Particle.REVERSE_PORTAL, well, 6, 0.5, 0.1, 0.5, 0.05);
             
             for (Player player : well.getWorld().getPlayers()) {
                 double distSq = player.getLocation().distanceSquared(well);
-                if (distSq < 144.0 && distSq > 1.0) { // Effective limit radius 12 block units
+                if (distSq < 144.0 && distSq > 1.0) {
                     double distance = Math.sqrt(distSq);
-                    double intensity = (12.0 - distance) / 12.0; // Inversely proportional algorithm scaling
+                    double intensity = (12.0 - distance) / 12.0;
                     
                     Vector vector = player.getLocation().toVector().subtract(well.toVector());
                     Vector adjustment = isPull ? vector.clone().normalize().multiply(-0.18 * intensity) : vector.clone().normalize().multiply(0.25 * intensity);
                     
-                    // Direct physics vector injection bypassing scaling problems
                     player.setVelocity(player.getVelocity().add(adjustment.setY(isPull ? -0.02 : 0.08)));
                 }
             }
@@ -193,7 +191,6 @@ public class RefusalStage2 implements Listener {
         dragon.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 40, 0, false, false));
         Location targetTrack = target.getLocation();
 
-        // 1.5 Second Tracking ground shadow indicator window loop
         BukkitTask trackingShadow = new BukkitRunnable() {
             int runs = 0;
             @Override
@@ -213,9 +210,9 @@ public class RefusalStage2 implements Listener {
             targetTrack.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, targetTrack, 3);
 
             for (Player p : targetTrack.getWorld().getPlayers()) {
-                if (p.getLocation().distanceSquared(targetTrack) < 49.0) { // 7 Block Radius Check
-                    p.damage(16.0, dragon); // 8 Hearts
-                    p.setVelocity(new Vector(0, 1.6, 0)); // Launcher payload
+                if (p.getLocation().distanceSquared(targetTrack) < 49.0) { 
+                    p.damage(16.0, dragon);
+                    p.setVelocity(new Vector(0, 1.6, 0)); 
                 }
             }
             dragon.removePotionEffect(PotionEffectType.INVISIBILITY);
